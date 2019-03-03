@@ -16,7 +16,7 @@ library(stringr)
 import requests
 import random
 
-query = "dog sitting on couch"
+query = "inside dog"
 
 r = requests.get("https://api.qwant.com/api/search/images",
                  params={
@@ -59,11 +59,13 @@ Create image folder
 image_folder = 'images'
 if(!dir.exists(image_folder)) {
   dir.create(image_folder)
+  dir.create(paste0(image_folder, "/dogs_on_couch"))
+  dir.create(paste0(image_folder, "/dogs_off_couch"))
 }
 ```
 
 ```{r}
-download.file(urls, paste0(image_folder, "/dogs_on_couch/", url_names))
+download.file(urls, paste0(image_folder, "/dogs_off_couch/", url_names))
 ```
 
 ```{r}
