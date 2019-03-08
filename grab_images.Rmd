@@ -7,67 +7,40 @@ editor_options:
 
 ```{r}
 rm(list = ls())
-library(reticulate)
-library(RVerbalExpressions)
-library(stringr)
 ```
 
-```{python}
-import requests
-import random
+```{r}
+library(tidyverse)
+library(imager)
+```
 
-query = "keep dog off couch"
+```{r}
+filenames = base::list.files('images')
+```
 
-r = requests.get("https://api.qwant.com/api/search/images",
-                 params={
-                   'count': 200,
-                   'q': query,
-                   't': 'images',
-                   'safesearch': 1,
-                   'locale': 'en_US',
-                   'uiv': 4
-                 },
-                 headers={
-                   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
-                 }
+```{r}
+couch_images = map(
+  filenames,
+    function(x) {
+      load.image(
+      paste0('images/', x)
+    ) %>% 
+        as.array()
+  }
 )
+```
 
-response = r.json().get('data').get('result').get('items')
-urls = [r.get('media') for r in response]
+
+```{r}
+keep_images = map_lgl(couch_images, function(x) dim(x)[[1]] == 1920)
 ```
 
 ```{r}
-urls <- start_of_line() %>% 
-  find("http") %>% 
-  maybe("s") %>% 
-  then("://") %>%
-  str_remove(py$urls, .)
-
-
+couch_images = couch_images[keep_images]
 ```
+
 
 ```{r}
-url_names <- 
-  start_of_line() %>% 
-  anything() %>% 
-  any("/") %>% 
-  str_remove(urls, .)
+plot(couch_images[[1]])
 ```
 
-Create image folder
-```{r}
-image_folder = 'images'
-if(!dir.exists(image_folder)) {
-  dir.create(image_folder)
-  dir.create(paste0(image_folder, "/dogs_on_couch"))
-  dir.create(paste0(image_folder, "/dogs_off_couch"))
-}
-```
-
-```{r}
-download.file(urls, paste0(image_folder, "/dogs_off_couch/", url_names))
-```
-
-```{r}
-
-```
