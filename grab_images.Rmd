@@ -16,7 +16,7 @@ library(stringr)
 import requests
 import random
 
-query = "inside dog"
+query = "keep dog off couch"
 
 r = requests.get("https://api.qwant.com/api/search/images",
                  params={
