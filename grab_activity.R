@@ -1,33 +1,39 @@
-
 rm(list = ls())
 library(tidyverse)
 library(imager)
 library(lubridate)
 
-system(
-  "rm /home/keras/doggyDL/images/*.jpg"
-) %>% try
+local = "/Users/digitalfirstmedia/Documents/R/doggyDL"
+if(getwd() == local) {
+  path = local
+  aws = "aws"
+} else {
+  path = '/home/keras/doggyDL/'
+  aws = '/home/keras/.local/bin/aws'
+}
 
+
+  
 system(
-  paste0('/home/keras/.local/bin/aws s3 sync s3://couch-dog-photos/images /home/keras/doggyDL/images')
+  paste0(aws, ' s3 sync s3://couch-dog-photos/images ', path, '/images')
 )
 
 filenames = base::list.files('images')
 
-if(length(filenames) < 3) {
+if(length(filenames) < 2) {
   
   stop(paste0("Not enough files ", length(filenames)))
 }
 
 
 
-run_batch = function(filenames) {
+run_batch = function(filenames, path) {
     couch_images = map(
     filenames,
       function(x) {
         print(x)
         x %>% 
-          paste0('images/', .) %>% 
+          paste0(path, '/images/', .) %>% 
           load.image() %>% 
           as.array()
     }
@@ -68,13 +74,13 @@ run_batch = function(filenames) {
     f2 = clean_images$name[[i]]
     
     file.copy(
-      paste0('/home/keras/doggyDL/images/',f1),
-      paste0('/home/keras/doggyDL/activity/',f1)
+      paste0(path, '/images/',f1),
+      paste0(path, '/activity/',f1)
     )
     
     file.copy(
-      paste0('/home/keras/doggyDL/images/',f2),
-      paste0('/home/keras/doggyDL/activity/',f2)
+      paste0(path, '/images/',f2),
+      paste0(path,'/activity/',f2)
     )
     
     # plot(as.cimg(new_mat))
@@ -90,28 +96,28 @@ n_batches = length(filenames) - 1
 batch_step = 2
 
 for(i in (1:n_batches - 1)) {
-  run_batch(filenames = filenames[(1:batch_step) + i][!is.na(filenames[(1:batch_step) + i] )])
+  run_batch(filenames = filenames[(1:batch_step) + i][!is.na(filenames[(1:batch_step) + i] )], path = path)
 }
 
 
 system(
-  paste0('/home/keras/.local/bin/aws s3 rm s3://couch-dog-photos/images/ --recursive')
-) %>% try
+  paste0(aws, ' s3 rm s3://couch-dog-photos/images/ --recursive')
+) 
 
 system(
-  "rm /home/keras/doggyDL/images/*.jpg"
-) %>% try
+  paste0('rm ', path, '/images/*.jpg')
+) 
 # 
 system(
-  paste0('/home/keras/.local/bin/aws s3 cp /home/keras/doggyDL/activity/ s3://couch-dog-photos/activity/ --recursive')
-) %>% try
+  paste0(aws, ' s3 cp ', path, '/activity/ s3://couch-dog-photos/activity/ --recursive')
+)
 
 # 
 # 
 # 
 system(
-   "rm /home/keras/doggyDL/activity/*.jpg"
-) %>% try
+   paste0("rm ", path, "/activity/*.jpg")
+) 
 # 
 # 
 # 
