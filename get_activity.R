@@ -1,45 +1,29 @@
----
-title: "R Notebook"
-output: html_notebook
-editor_options: 
-  chunk_output_type: console
----
 
-```{r}
-rm(list = ls())
-```
-
-```{r}
 library(tidyverse)
 library(imager)
 library(lubridate)
-```
 
-```{r}
+
+
 system(
   paste0('aws s3 sync s3://couch-dog-photos/images ~/Documents/R/doggyDL/images')
 )
-```
 
-```{r}
+
 filenames = base::list.files('images')
-```
 
-```{r}
 couch_images = map(
   filenames,
-    function(x) {
-      print(x)
-      x %>% 
-        paste0('images/', .) %>% 
-        load.image() %>% 
-        as.array()
+  function(x) {
+    print(x)
+    x %>% 
+      paste0('images/', .) %>% 
+      load.image() %>% 
+      as.array()
   }
 )
-```
 
 
-```{r}
 couch_images = map2_df(
   couch_images,
   filenames,
@@ -53,11 +37,8 @@ couch_images = map2_df(
     data
   }
 )
-```
 
 
-
-```{r}
 clean_images <- couch_images %>% 
   unnest(size) %>% 
   unnest(name) %>% 
@@ -65,10 +46,7 @@ clean_images <- couch_images %>%
          name = value1) %>%
   filter(size == 1920) %>% 
   mutate(time = str_remove(name, "image") %>% ymd_hms)
-```
 
-```{r}
-sum(as.matrix(clean_images$f1[[41]] - as.matrix(clean_images$f1[[40]])))
 
 for(i in 1:(nrow(clean_images) - 1)) {
   new_mat = as.matrix(abs(clean_images$f1[[i+1]]) - abs(as.matrix(clean_images$f1[[i]])))
@@ -76,7 +54,7 @@ for(i in 1:(nrow(clean_images) - 1)) {
   new_mat[abs(new_mat) < .2] = 0
   diff = abs(sum(new_mat))
   print(diff)
-  if(diff >= 3000) {
+  if(diff >= 500) {
     
     f1 = clean_images$name[[i+1]]
     f2 = clean_images$name[[i]]
@@ -93,40 +71,25 @@ for(i in 1:(nrow(clean_images) - 1)) {
     
     plot(as.cimg(new_mat))
   }
-
+  
 }
 
 
-```
 
-
-```{r}
-system(
-  paste0('aws s3 rm s3://couch-dog-photos/images/ --recursive')
-)
-#
-system(
-  "rm images/*.jpg"
-)
-```
-
-
-```{r}
 system(
   paste0('aws s3 cp activity/ s3://couch-dog-photos/activity/ --recursive')
 )
-```
 
-```{r}
+
 system(
-   "rm activity/*.jpg"
+  "rm activity/*.jpg"
 )
-```
-
-```{r}
-system(
-   paste0('aws s3 sync s3://couch-dog-photos/activity ~/Documents/R/doggyDL/activity')
-   )
-```
-
-
+# 
+# 
+# 
+# system(
+#   paste0('aws s3 sync s3://couch-dog-photos/activity ~/Documents/R/doggyDL/activity')
+# )
+# 
+# 
+# 
