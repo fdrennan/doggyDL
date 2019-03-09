@@ -17,7 +17,7 @@ library(lubridate)
 
 ```{r}
 system(
-  paste0('aws s3 sync s3://couch-dog-photos/images ~/Documents/R/doggyDL/images')
+  paste0('/home/keras/.local/bin/aws s3 sync s3://couch-dog-photos/images /home/keras/doggyDL/images')
 )
 ```
 
@@ -26,51 +26,42 @@ filenames = base::list.files('images')
 ```
 
 ```{r}
-couch_images = map(
-  filenames,
-    function(x) {
-      print(x)
-      x %>% 
-        paste0('images/', .) %>% 
-        load.image() %>% 
-        as.array()
-  }
-)
-```
-
-
-```{r}
-couch_images = map2_df(
-  couch_images,
-  filenames,
-  function(x, y) {
-    data = bind_cols(nest(as_tibble(x[,,,1])), 
-                     nest(as_tibble(x[,,,2])), 
-                     nest(as_tibble(x[,,,3])), 
-                     nest(as_tibble(dim(x)[[1]])),
-                     nest(as_tibble(y)))
-    colnames(data) = c('f1', 'f2', 'f3', 'size', 'name')
-    data
-  }
-)
-```
-
-
-
-```{r}
-clean_images <- couch_images %>% 
+run_batch = function(filenames) {
+    couch_images = map(
+    filenames,
+      function(x) {
+        print(x)
+        x %>% 
+          paste0('images/', .) %>% 
+          load.image() %>% 
+          as.array()
+    }
+  )
+    
+    couch_images = map2_df(
+    couch_images,
+    filenames,
+    function(x, y) {
+      data = bind_cols(nest(as_tibble(x[,,,1])), 
+                       nest(as_tibble(x[,,,2])), 
+                       nest(as_tibble(x[,,,3])), 
+                       nest(as_tibble(dim(x)[[1]])),
+                       nest(as_tibble(y)))
+      colnames(data) = c('f1', 'f2', 'f3', 'size', 'name')
+      data
+    }
+  )
+  
+  clean_images <- couch_images %>% 
   unnest(size) %>% 
   unnest(name) %>% 
-  rename(size = value, 
+  dplyr::rename(size = value, 
          name = value1) %>%
   filter(size == 1920) %>% 
   mutate(time = str_remove(name, "image") %>% ymd_hms)
-```
-
-```{r}
-sum(as.matrix(clean_images$f1[[41]] - as.matrix(clean_images$f1[[40]])))
-
-for(i in 1:(nrow(clean_images) - 1)) {
+  
+  
+  for(i in 1:(nrow(clean_images) - 1)) {
   new_mat = as.matrix(abs(clean_images$f1[[i+1]]) - abs(as.matrix(clean_images$f1[[i]])))
   print(i)
   new_mat[abs(new_mat) < .2] = 0
@@ -97,36 +88,68 @@ for(i in 1:(nrow(clean_images) - 1)) {
 }
 
 
+  
+}
+n_files = length(filenames)
+batch_size = 10
+n_batches = ceiling(n_files/batch_size)
+batch_step = 9
+
+for(i in 1:n_batches) {
+  filenames[(1:batch_size)*i] %>% print
+  run_batch(filenames = head(filenames))
+}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+```
+
+```{r}
+
+
 ```
 
 
 ```{r}
 system(
-  paste0('aws s3 rm s3://couch-dog-photos/images/ --recursive')
+  paste0('/home/keras/.local/bin/aws s3 rm s3://couch-dog-photos/images/ --recursive')
 )
 #
 system(
-  "rm images/*.jpg"
+  "rm /home/keras/doggyDL/images/*.jpg"
 )
 ```
 
 
 ```{r}
 system(
-  paste0('aws s3 cp activity/ s3://couch-dog-photos/activity/ --recursive')
+  paste0('/home/keras/.local/bin/aws s3 cp /home/keras/doggyDL/activity/ s3://couch-dog-photos/activity/ --recursive')
 )
 ```
 
 ```{r}
 system(
-   "rm activity/*.jpg"
+   "rm /home/keras/doggyDL/activity/*.jpg"
 )
 ```
 
 ```{r}
 system(
-   paste0('aws s3 sync s3://couch-dog-photos/activity ~/Documents/R/doggyDL/activity')
-   )
+   paste0('/home/keras/.local/bin/aws s3 sync s3://couch-dog-photos/activity /home/keras/doggyDL/activity')
+)
 ```
 
 
