@@ -1,38 +1,26 @@
----
-title: "R Notebook"
-output: html_notebook
-editor_options: 
-  chunk_output_type: console
----
 
-```{r}
 rm(list = ls())
-```
-
-```{r}
 library(tidyverse)
 library(imager)
 library(lubridate)
-```
 
+system(
+  "rm /home/keras/doggyDL/images/*.jpg"
+) %>% try
 
-
-```{r}
 system(
   paste0('/home/keras/.local/bin/aws s3 sync s3://couch-dog-photos/images /home/keras/doggyDL/images')
 )
-```
 
-```{r}
 filenames = base::list.files('images')
 
-if(length(filenames) < 11) {
+if(length(filenames) < 3) {
   
   stop(paste0("Not enough files ", length(filenames)))
 }
-```
 
-```{r}
+
+
 run_batch = function(filenames) {
     couch_images = map(
     filenames,
@@ -74,22 +62,22 @@ run_batch = function(filenames) {
   new_mat[abs(new_mat) < .2] = 0
   diff = abs(sum(new_mat))
   print(diff)
-  if(diff >= 3000) {
+  if(diff >= 100) {
     
     f1 = clean_images$name[[i+1]]
     f2 = clean_images$name[[i]]
     
     file.copy(
-      paste0('images/',f1),
-      paste0('activity/',f1)
+      paste0('/home/keras/doggyDL/images/',f1),
+      paste0('/home/keras/doggyDL/activity/',f1)
     )
     
     file.copy(
-      paste0('images/',f2),
-      paste0('activity/',f2)
+      paste0('/home/keras/doggyDL/images/',f2),
+      paste0('/home/keras/doggyDL/activity/',f2)
     )
     
-    plot(as.cimg(new_mat))
+    # plot(as.cimg(new_mat))
   }
 
 }
@@ -97,45 +85,39 @@ run_batch = function(filenames) {
 
   
 }
-n_files = length(filenames)
-batch_size = 5
-n_batches = ceiling(n_files/batch_size)
-batch_step = 4
 
-for(i in 1:n_batches) {
-  filenames[(1:batch_size)*i][!is.na(filenames[(1:batch_size)*i])] %>% print
-  run_batch(filenames = head(filenames))
+n_batches = length(filenames) - 1
+batch_step = 2
+
+for(i in (1:n_batches - 1)) {
+  run_batch(filenames = filenames[(1:batch_step) + i][!is.na(filenames[(1:batch_step) + i] )])
 }
 
-```
 
-```{r}
 system(
   paste0('/home/keras/.local/bin/aws s3 rm s3://couch-dog-photos/images/ --recursive')
-)
+) %>% try
 
 system(
   "rm /home/keras/doggyDL/images/*.jpg"
-)
-```
-
-
-```{r}
+) %>% try
+# 
 system(
   paste0('/home/keras/.local/bin/aws s3 cp /home/keras/doggyDL/activity/ s3://couch-dog-photos/activity/ --recursive')
-)
-```
+) %>% try
 
-```{r}
+# 
+# 
+# 
 system(
    "rm /home/keras/doggyDL/activity/*.jpg"
-)
-```
-
-```{r}
-system(
-   paste0('/home/keras/.local/bin/aws s3 sync s3://couch-dog-photos/activity /home/keras/doggyDL/activity')
-)
-```
+) %>% try
+# 
+# 
+# 
+# system(
+#    paste0('/home/keras/.local/bin/aws s3 sync s3://couch-dog-photos/activity /home/keras/doggyDL/activity')
+# )
+# 
 
 
