@@ -27,7 +27,7 @@ if(length(filenames) < 2) {
 
 
 
-run_batch = function(filenames, path) {
+run_batch = function(filenames, path, ignore = TRUE) {
     couch_images = map(
     filenames,
       function(x) {
@@ -38,7 +38,7 @@ run_batch = function(filenames, path) {
           as.array()
     }
   )
-    
+   
     couch_images = map2_df(
     couch_images,
     filenames,
@@ -73,17 +73,21 @@ run_batch = function(filenames, path) {
     f1 = clean_images$name[[i+1]]
     f2 = clean_images$name[[i]]
     
-    file.copy(
-      paste0(path, '/images/',f1),
-      paste0(path, '/activity/',f1)
-    )
+   if(!ignore) {
+     file.copy(
+       paste0(path, '/images/',f1),
+       paste0(path, '/activity/',f1)
+     )
+     
+     file.copy(
+       paste0(path, '/images/',f2),
+       paste0(path,'/activity/',f2)
+     )
+   } else {
+     plot(as.cimg(new_mat))
+   }
     
-    file.copy(
-      paste0(path, '/images/',f2),
-      paste0(path,'/activity/',f2)
-    )
     
-    # plot(as.cimg(new_mat))
   }
 
 }
@@ -96,7 +100,8 @@ n_batches = length(filenames) - 1
 batch_step = 2
 
 for(i in (1:n_batches - 1)) {
-  run_batch(filenames = filenames[(1:batch_step) + i][!is.na(filenames[(1:batch_step) + i] )], path = path)
+  run_batch(filenames = filenames[(1:batch_step) + i][!is.na(filenames[(1:batch_step) + i] )], 
+            path = path, ignore = FALSE)
 }
 
 
@@ -106,23 +111,22 @@ system(
 
 system(
   paste0('rm ', path, '/images/*.jpg')
-) 
-# 
+)
+
 system(
   paste0(aws, ' s3 cp ', path, '/activity/ s3://couch-dog-photos/activity/ --recursive')
 )
 
-# 
-# 
-# 
+
+
+
 system(
    paste0("rm ", path, "/activity/*.jpg")
-) 
-# 
-# 
-# 
+)
+
+
 # system(
-#    paste0('/home/keras/.local/bin/aws s3 sync s3://couch-dog-photos/activity /home/keras/doggyDL/activity')
+#    paste0(aws, ' s3 sync s3://couch-dog-photos/activity ', path, '/activity')
 # )
 # 
 
