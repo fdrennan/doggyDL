@@ -68,7 +68,7 @@ run_batch = function(filenames, path, ignore = TRUE) {
   new_mat[abs(new_mat) < .2] = 0
   diff = abs(sum(new_mat))
   print(diff)
-  if(diff >= 100) {
+  if(diff >= 1000) {
     
     f1 = clean_images$name[[i+1]]
     f2 = clean_images$name[[i]]
