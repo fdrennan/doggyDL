@@ -1,0 +1,128 @@
+git p---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+Load all the packages we will need.
+
+```{r setup, include=FALSE}
+rm(list = ls())
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(imager)
+library(keras)
+```
+
+
+```{r}
+train_datagen = image_data_generator(
+  rescale = 1/1
+  # rotation_range = 200,
+  # width_shift_range = 0.2,
+  # height_shift_range = 0.2,
+  # shear_range = 0.2,
+  # zoom_range = 0.2,
+  # horizontal_flip = TRUE,
+  # fill_mode = "nearest"
+)
+train_generator = flow_images_from_directory(
+  "sorted",
+  train_datagen,
+  target_size = c(480, 270),
+  batch_size = 30,
+  class_mode = "binary"
+)
+```
+
+```{r}
+# validation_datagen = image_data_generator(
+#   rescale = 1/255,
+#   rotation_range = 40,
+#   width_shift_range = 0.2,
+#   height_shift_range = 0.2,
+#   shear_range = 0.2,
+#   zoom_range = 0.2,
+#   horizontal_flip = TRUE,
+#   fill_mode = "nearest"
+# )
+# validation_generator = flow_images_from_directory(
+#   "validation_images",
+#   validation_datagen,
+#   target_size = c(96, 96),
+#   batch_size = 100,
+#   class_mode = "binary"
+# )
+```
+
+```{r}
+model <- keras_model_sequential() %>% 
+  layer_conv_2d(filters = 32, 
+                kernel_size = c(3, 3), 
+                activation = "relu",
+                data_format ='channels_last',
+                input_shape = c(480, 270, 3)) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>% 
+  layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = 'relu') %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3), activation = 'relu') %>%
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3)) %>%
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3)) %>%
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_flatten() %>%
+  layer_dense(units = 512, activation = "relu") %>%
+  layer_dense(units = 1, activation = "sigmoid")
+```
+
+```{r}
+print(model)
+```
+
+```{r, echo=TRUE, results='hide'}
+
+if(TRUE) {
+   model %>% compile(
+    optimizer = optimizer_rmsprop(lr = .01),
+    loss = "binary_crossentropy",
+    metrics = "accuracy"
+  )
+                
+  model %>% fit_generator(
+    train_generator,
+    steps_per_epoch = 20,
+    epochs = 100,
+    # validation_data = validation_generator,
+    # validation_steps = 5
+  )
+  
+} else {
+  
+  parallel_model <- multi_gpu_model(model, gpus = 1)
+    parallel_model %>% compile(
+     optimizer = optimizer_rmsprop(lr = 1e-4),
+    loss = "binary_crossentropy",
+    metrics = "accuracy"
+    )
+  
+  parallel_model %>% fit_generator(
+    train_generator,
+    steps_per_epoch = 1000,
+    epochs = 30,
+    validation_data = validation_generator,
+    validation_steps = 20
+  )
+}
+
+
+```
+
+```{r}
+```

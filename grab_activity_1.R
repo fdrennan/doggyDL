@@ -68,7 +68,7 @@ run_batch = function(filenames, path, ignore = TRUE) {
   new_mat[abs(new_mat) < .2] = 0
   diff = abs(sum(new_mat))
   print(diff)
-  if(diff >= 1000) {
+  if(diff >= 300) {
     
     f1 = clean_images$name[[i+1]]
     f2 = clean_images$name[[i]]
@@ -83,6 +83,8 @@ run_batch = function(filenames, path, ignore = TRUE) {
        paste0(path, '/images/',f2),
        paste0(path,'/activity/',f2)
      )
+     
+     plot(as.cimg(new_mat))
    } else {
      plot(as.cimg(new_mat))
    }
@@ -117,17 +119,33 @@ system(
   paste0(aws, ' s3 cp ', path, '/activity/ s3://couch-dog-photos/activity/ --recursive')
 )
 
-
-
-
 system(
-   paste0("rm ", path, "/activity/*.jpg")
+  paste0(aws, ' s3 cp ', path, '/sorted/ s3://couch-dog-photos/sorted/ --recursive')
 )
 
+
+
+# system(
+#    paste0("rm ", path, "/activity/*.jpg")
+# )
+
+# system(
+#    paste0("rm ", path, "/sorted/dog/*.jpg")
+# )
+
+# system(
+#    paste0("rm ", path, "/sorted/no_dog/*.jpg")
+# )
+
+# 
+# 
+# system(
+#    paste0(aws, ' s3 sync s3://couch-dog-photos/activity ', path, '/activity')
+# )
 
 # system(
 #    paste0(aws, ' s3 sync s3://couch-dog-photos/activity ', path, '/activity')
 # )
-# 
+
 
 
